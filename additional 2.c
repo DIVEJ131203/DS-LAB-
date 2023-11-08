@@ -1,79 +1,43 @@
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
 
-struct Node {
-    int data;
-    struct Node* next;
-};
+// Function to add two long positive integer numbers
+void addLongIntegers(char num1[], char num2[], char result[]) {
+    int len1 = strlen(num1);
+    int len2 = strlen(num2);
 
-typedef struct Node Node;
+    int maxLen = len1 > len2 ? len1 : len2;
+    int carry = 0;
 
-Node* createNode(int data) {
-    Node* newNode = (Node*)malloc(sizeof(Node));
-    newNode->data = data;
-    newNode->next = NULL;
-    return newNode;
-}
+    // Initialize the result with zeros
+    for (int i = 0; i < maxLen + 1; i++) {
+        result[i] = '0';
+    }
+    result[maxLen + 1] = '\0';
 
-Node* mergeSortedLists(Node* X, Node* Y) {
-    Node dummy; // Create a dummy node to simplify edge cases
-    Node* tail = &dummy;
-
-    while (X != NULL && Y != NULL) {
-        if (X->data <= Y->data) {
-            tail->next = X;
-            X = X->next;
-        } else {
-            tail->next = Y;
-            Y = Y->next;
-        }
-        tail = tail->next;
+    // Perform addition from right to left
+    for (int i = 0; i < maxLen; i++) {
+        int digit1 = (i < len1) ? (num1[len1 - 1 - i] - '0') : 0;
+        int digit2 = (i < len2) ? (num2[len2 - 1 - i] - '0') : 0;
+        int sum = digit1 + digit2 + carry;
+        carry = sum / 10;
+        result[maxLen - i] = (sum % 10) + '0';
     }
 
-    // Append any remaining nodes from X or Y
-    if (X != NULL) {
-        tail->next = X;
-    } else {
-        tail->next = Y;
-    }
-
-    return dummy.next; // The merged list starts from the next node of the dummy
-}
-
-void printList(Node* head) {
-    Node* current = head;
-    while (current != NULL) {
-        printf("%d -> ", current->data);
-        current = current->next;
-    }
-    printf("NULL\n");
+    result[0] = carry + '0';
 }
 
 int main() {
-    Node* X = createNode(1);
-    X->next = createNode(9);
-    X->next->next = createNode(17);
+    char num1[100], num2[100], result[101];
 
-    Node* Y = createNode(2);
-    Y->next = createNode(10);
-    Y->next->next = createNode(14);
+    printf("Enter the first long positive integer: ");
+    scanf("%s", num1);
+    printf("Enter the second long positive integer: ");
+    scanf("%s", num2);
 
-    printf("List X: ");
-    printList(X);
-    printf("List Y: ");
-    printList(Y);
+    addLongIntegers(num1, num2, result);
 
-    Node* Z = mergeSortedLists(X, Y);
-
-    printf("Merged List Z: ");
-    printList(Z);
-
-    // Free the memory to avoid memory leaks
-    while (Z != NULL) {
-        Node* temp = Z;
-        Z = Z->next;
-        free(temp);
-    }
+    printf("Sum: %s\n", result);
 
     return 0;
 }
