@@ -1,83 +1,146 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Node {
-    int data;
-    struct Node* next;
-    struct Node* prev;
+// Define a structure for a term in a polynomial
+struct Term {
+    int coefficient;
+    int exponent;
+    struct Term* next;
 };
 
-typedef struct Node Node;
+typedef struct Term Term;
 
-Node* createNode(int data) {
-    Node* newNode = (Node*)malloc(sizeof(Node));
-    newNode->data = data;
-    newNode->next = NULL;
-    newNode->prev = NULL;
-    return newNode;
+Term* createTerm(int coefficient, int exponent) {
+    Term* newTerm = (Term*)malloc(sizeof(Term));
+    newTerm->coefficient = coefficient;
+    newTerm->exponent = exponent;
+    newTerm->next = NULL;
+    return newTerm;
 }
 
-// Function to concatenate two doubly linked lists X1 and X2
-Node* concatenateLists(Node* X1, Node* X2) {
-    if (X1 == NULL) {
-        return X2;
+// Function to insert a term into a polynomial linked list
+Term* insertTerm(Term* head, int coefficient, int exponent) {
+    Term* newTerm = createTerm(coefficient, exponent);
+
+    if (head == NULL) {
+        return newTerm;
     }
 
-    if (X2 == NULL) {
-        return X1;
+    if (exponent > head->exponent) {
+        newTerm->next = head;
+        return newTerm;
     }
 
-    Node* current = X1;
-    while (current->next != NULL) {
+    if (exponent == head->exponent) {
+        head->coefficient += coefficient;
+        free(newTerm);
+        return head;
+    }
+
+    Term* current = head;
+    while (current->next != NULL && exponent < current->next->exponent) {
         current = current->next;
     }
 
-    current->next = X2;
-    X2->prev = current;
+    if (current->next != NULL && exponent == current->next->exponent) {
+        current->next->coefficient += coefficient;
+        free(newTerm);
+    } else {
+        newTerm->next = current->next;
+        current->next = newTerm;
+    }
 
-    return X1;
+    return head;
 }
 
-// Function to traverse and print the doubly linked list
-void traverseList(Node* head) {
-    printf("List: ");
+// Function to display a polynomial
+void displayPolynomial(Term* head) {
+    if (head == NULL) {
+        printf("0\n");
+        return;
+    }
+
     while (head != NULL) {
-        printf("%d -> ", head->data);
+        if (head->coefficient != 0) {
+            printf("%dx^%d ", head->coefficient, head->exponent);
+            if (head->next != NULL) {
+                printf("+ ");
+            }
+        }
         head = head->next;
     }
-    printf("NULL\n");
+    printf("\n");
+}
+
+// Function to add two polynomials
+Term* addPolynomials(Term* poly1, Term* poly2) {
+    Term* result = NULL;
+
+    while (poly1 != NULL) {
+        result = insertTerm(result, poly1->coefficient, poly1->exponent);
+        poly1 = poly1->next;
+    }
+
+    while (poly2 != NULL) {
+        result = insertTerm(result, poly2->coefficient, poly2->exponent);
+        poly2 = poly2->next;
+    }
+
+    return result;
 }
 
 int main() {
-    // Create the first doubly linked list (X1)
-    Node* X1 = createNode(1);
-    X1->next = createNode(2);
-    X1->next->prev = X1;
-    X1->next->next = createNode(3);
-    X1->next->next->prev = X1->next;
+    Term* poly1 = NULL;
+    Term* poly2 = NULL;
 
-    // Create the second doubly linked list (X2)
-    Node* X2 = createNode(4);
-    X2->next = createNode(5);
-    X2->next->prev = X2;
-    X2->next->next = createNode(6);
-    X2->next->next->prev = X2->next;
+    int coefficient, exponent;
+    int n, m;
 
-    printf("Doubly Linked List X1: ");
-    traverseList(X1);
-    printf("Doubly Linked List X2: ");
-    traverseList(X2);
+    printf("Enter the number of terms in the first polynomial: ");
+    scanf("%d", &n);
 
-    // Concatenate X2 to X1
-    X1 = concatenateLists(X1, X2);
+    printf("Enter the terms for the first polynomial (coefficient exponent):\n");
+    for (int i = 0; i < n; i++) {
+        scanf("%d %d", &coefficient, &exponent);
+        poly1 = insertTerm(poly1, coefficient, exponent);
+    }
 
-    printf("Concatenated List X1: ");
-    traverseList(X1);
+    printf("Enter the number of terms in the second polynomial: ");
+    scanf("%d", &m);
+
+    printf("Enter the terms for the second polynomial (coefficient exponent):\n");
+    for (int i = 0; i < m; i++) {
+        scanf("%d %d", &coefficient, &exponent);
+        poly2 = insertTerm(poly2, coefficient, exponent);
+    }
+
+    printf("First Polynomial: ");
+    displayPolynomial(poly1);
+
+    printf("Second Polynomial: ");
+    displayPolynomial(poly2);
+
+    Term* result = addPolynomials(poly1, poly2);
+
+    printf("Resultant Polynomial (Sum of the two polynomials): ");
+    displayPolynomial(result);
 
     // Free the memory to avoid memory leaks
-    while (X1 != NULL) {
-        Node* temp = X1;
-        X1 = X1->next;
+    while (poly1 != NULL) {
+        Term* temp = poly1;
+        poly1 = poly1->next;
+        free(temp);
+    }
+
+    while (poly2 != NULL) {
+        Term* temp = poly2;
+        poly2 = poly2->next;
+        free(temp);
+    }
+
+    while (result != NULL) {
+        Term* temp = result;
+        result = result->next;
         free(temp);
     }
 

@@ -1,172 +1,159 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Node {
-    int data;
-    struct Node* next;
-    struct Node* prev;
+// Define a structure for a term in a polynomial
+struct Term {
+    int coefficient;
+    int exponent;
+    struct Term* next;
+    struct Term* prev;
 };
 
-typedef struct Node Node;
+typedef struct Term Term;
 
-Node* createNode(int data) {
-    Node* newNode = (Node*)malloc(sizeof(Node));
-    newNode->data = data;
-    newNode->next = NULL;
-    newNode->prev = NULL;
-    return newNode;
+// Define a structure for the header node
+struct Header {
+    int degree;
+    Term* term;
+};
+
+typedef struct Header Header;
+
+Header* createHeader(int degree) {
+    Header* newHeader = (Header*)malloc(sizeof(Header));
+    newHeader->degree = degree;
+    newHeader->term = NULL;
+    return newHeader;
 }
 
-Node* insertRear(Node* head, int data) {
-    Node* newNode = createNode(data);
-    if (head == NULL) {
-        return newNode;
+Term* createTerm(int coefficient, int exponent) {
+    Term* newTerm = (Term*)malloc(sizeof(Term));
+    newTerm->coefficient = coefficient;
+    newTerm->exponent = exponent;
+    newTerm->next = NULL;
+    newTerm->prev = NULL;
+    return newTerm;
+}
+
+// Function to insert a term into a polynomial linked list
+void insertTerm(Header* header, int coefficient, int exponent) {
+    Term* newTerm = createTerm(coefficient, exponent);
+
+    if (header->term == NULL) {
+        header->term = newTerm;
+        newTerm->next = newTerm;
+        newTerm->prev = newTerm;
+    } else {
+        Term* current = header->term;
+        while (current->next != header->term) {
+            current = current->next;
+        }
+        current->next = newTerm;
+        newTerm->prev = current;
+        newTerm->next = header->term;
+        header->term->prev = newTerm;
+    }
+}
+
+// Function to display a polynomial
+void displayPolynomial(Header* header) {
+    if (header->term == NULL) {
+        printf("0\n");
+        return;
     }
 
-    Node* current = head;
-    while (current->next != NULL) {
+    Term* current = header->term;
+    do {
+        printf("%dx^%d ", current->coefficient, current->exponent);
+        if (current->next != header->term) {
+            printf("+ ");
+        }
         current = current->next;
-    }
-
-    current->next = newNode;
-    newNode->prev = current;
-
-    return head;
+    } while (current != header->term);
+    printf("\n");
 }
 
-void traverseList(Node* head) {
-    printf("List: ");
-    while (head != NULL) {
-        printf("%d -> ", head->data);
-        head = head->next;
-    }
-    printf("NULL\n");
-}
+// Function to multiply two polynomials
+Header* multiplyPolynomials(Header* poly1, Header* poly2) {
+    Header* result = createHeader(poly1->degree + poly2->degree);
 
-// Function to compute the union of two doubly linked lists
-Node* unionLists(Node* list1, Node* list2) {
-    Node* result = NULL;
-    Node* current1 = list1;
-    Node* current2 = list2;
+    Term* term1 = poly1->term;
+    do {
+        Term* term2 = poly2->term;
+        do {
+            int coefficient = term1->coefficient * term2->coefficient;
+            int exponent = term1->exponent + term2->exponent;
 
-    while (current1 != NULL) {
-        result = insertRear(result, current1->data);
-        current1 = current1->next;
-    }
-
-    while (current2 != NULL) {
-        int data = current2->data;
-        Node* temp = result;
-        int found = 0;
-
-        while (temp != NULL) {
-            if (temp->data == data) {
-                found = 1;
-                break;
-            }
-            temp = temp->next;
-        }
-
-        if (!found) {
-            result = insertRear(result, data);
-        }
-
-        current2 = current2->next;
-    }
-
-    return result;
-}
-
-// Function to compute the intersection of two doubly linked lists
-Node* intersectionLists(Node* list1, Node* list2) {
-    Node* result = NULL;
-    Node* current1 = list1;
-
-    while (current1 != NULL) {
-        int data = current1->data;
-        Node* current2 = list2;
-        int found = 0;
-
-        while (current2 != NULL) {
-            if (current2->data == data) {
-                found = 1;
-                break;
-            }
-            current2 = current2->next;
-        }
-
-        if (found) {
-            result = insertRear(result, data);
-        }
-
-        current1 = current1->next;
-    }
+            insertTerm(result, coefficient, exponent);
+            term2 = term2->next;
+        } while (term2 != poly2->term);
+        term1 = term1->next;
+    } while (term1 != poly1->term);
 
     return result;
 }
 
 int main() {
-    Node* list1 = NULL;
-    Node* list2 = NULL;
-    int n, m, data;
+    Header* poly1 = createHeader(0);
+    Header* poly2 = createHeader(0);
 
-    printf("Enter the number of elements for List 1: ");
+    int coefficient, exponent;
+    int n, m;
+
+    printf("Enter the number of terms in the first polynomial: ");
     scanf("%d", &n);
-    printf("Enter the elements for List 1:\n");
+
+    printf("Enter the terms for the first polynomial (coefficient exponent):\n");
     for (int i = 0; i < n; i++) {
-        scanf("%d", &data);
-        list1 = insertRear(list1, data);
+        scanf("%d %d", &coefficient, &exponent);
+        insertTerm(poly1, coefficient, exponent);
     }
 
-    printf("Enter the number of elements for List 2: ");
+    printf("Enter the number of terms in the second polynomial: ");
     scanf("%d", &m);
-    printf("Enter the elements for List 2:\n");
+
+    printf("Enter the terms for the second polynomial (coefficient exponent):\n");
     for (int i = 0; i < m; i++) {
-        scanf("%d", &data);
-        list2 = insertRear(list2, data);
+        scanf("%d %d", &coefficient, &exponent);
+        insertTerm(poly2, coefficient, exponent);
     }
 
-    printf("Doubly Linked List 1: ");
-    traverseList(list1);
-    printf("Doubly Linked List 2: ");
-    traverseList(list2);
+    printf("First Polynomial: ");
+    displayPolynomial(poly1);
 
-    // Compute the union of list1 and list2
-    Node* unionResult = unionLists(list1, list2);
+    printf("Second Polynomial: ");
+    displayPolynomial(poly2);
 
-    printf("Union of List 1 and List 2: ");
-    traverseList(unionResult);
+    Header* result = multiplyPolynomials(poly1, poly2);
 
-    // Compute the intersection of list1 and list2
-    Node* intersectionResult = intersectionLists(list1, list2);
-
-    printf("Intersection of List 1 and List 2: ");
-    traverseList(intersectionResult);
+    printf("Resultant Polynomial (Multiplication of the two polynomials): ");
+    displayPolynomial(result);
 
     // Free the memory to avoid memory leaks
-    while (list1 != NULL) {
-        Node* temp = list1;
-        list1 = list1->next;
+    Term* term1 = poly1->term;
+    do {
+        Term* temp = term1;
+        term1 = term1->next;
         free(temp);
-    }
+    } while (term1 != poly1->term);
 
-    while (list2 != NULL) {
-        Node* temp = list2;
-        list2 = list2->next;
+    Term* term2 = poly2->term;
+    do {
+        Term* temp = term2;
+        term2 = term2->next;
         free(temp);
-    }
+    } while (term2 != poly2->term);
 
-    while (unionResult != NULL) {
-        Node* temp = unionResult;
-        unionResult = unionResult->next;
+    Term* termResult = result->term;
+    do {
+        Term* temp = termResult;
+        termResult = termResult->next;
         free(temp);
-    }
+    } while (termResult != result->term);
 
-    while (intersectionResult != NULL) {
-        Node* temp = intersectionResult;
-        intersectionResult = intersectionResult->next;
-        free(temp);
-    }
+    free(poly1);
+    free(poly2);
+    free(result);
 
     return 0;
 }

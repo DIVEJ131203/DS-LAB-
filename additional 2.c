@@ -1,43 +1,157 @@
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
 
-// Function to add two long positive integer numbers
-void addLongIntegers(char num1[], char num2[], char result[]) {
-    int len1 = strlen(num1);
-    int len2 = strlen(num2);
+// Define a structure for a term in a polynomial
+struct Term {
+    int coefficient;
+    int exponent;
+    struct Term* next;
+    struct Term* prev;
+};
 
-    int maxLen = len1 > len2 ? len1 : len2;
-    int carry = 0;
+typedef struct Term Term;
 
-    // Initialize the result with zeros
-    for (int i = 0; i < maxLen + 1; i++) {
-        result[i] = '0';
+// Define a structure for the header node
+struct Header {
+    Term* term;
+};
+
+typedef struct Header Header;
+
+Header* createHeader() {
+    Header* newHeader = (Header*)malloc(sizeof(Header));
+    newHeader->term = NULL;
+    return newHeader;
+}
+
+Term* createTerm(int coefficient, int exponent) {
+    Term* newTerm = (Term*)malloc(sizeof(Term));
+    newTerm->coefficient = coefficient;
+    newTerm->exponent = exponent;
+    newTerm->next = NULL;
+    newTerm->prev = NULL;
+    return newTerm;
+}
+
+// Function to insert a term into a polynomial linked list
+void insertTerm(Header* header, int coefficient, int exponent) {
+    Term* newTerm = createTerm(coefficient, exponent);
+
+    if (header->term == NULL) {
+        header->term = newTerm;
+        newTerm->next = newTerm;
+        newTerm->prev = newTerm;
+    } else {
+        Term* current = header->term;
+        while (current->next != header->term) {
+            current = current->next;
+        }
+        current->next = newTerm;
+        newTerm->prev = current;
+        newTerm->next = header->term;
+        header->term->prev = newTerm;
     }
-    result[maxLen + 1] = '\0';
+}
 
-    // Perform addition from right to left
-    for (int i = 0; i < maxLen; i++) {
-        int digit1 = (i < len1) ? (num1[len1 - 1 - i] - '0') : 0;
-        int digit2 = (i < len2) ? (num2[len2 - 1 - i] - '0') : 0;
-        int sum = digit1 + digit2 + carry;
-        carry = sum / 10;
-        result[maxLen - i] = (sum % 10) + '0';
+// Function to display a polynomial
+void displayPolynomial(Header* header) {
+    if (header->term == NULL) {
+        printf("0\n");
+        return;
     }
 
-    result[0] = carry + '0';
+    Term* current = header->term;
+    do {
+        printf("%dx^%d ", current->coefficient, current->exponent);
+        if (current->next != header->term) {
+            printf("+ ");
+        }
+        current = current->next;
+    } while (current != header->term);
+    printf("\n");
+}
+
+// Function to add two polynomials
+Header* addPolynomials(Header* poly1, Header* poly2) {
+    Header* result = createHeader();
+
+    Term* term1 = poly1->term;
+    do {
+        insertTerm(result, term1->coefficient, term1->exponent);
+        term1 = term1->next;
+    } while (term1 != poly1->term);
+
+    Term* term2 = poly2->term;
+    do {
+        insertTerm(result, term2->coefficient, term2->exponent);
+        term2 = term2->next;
+    } while (term2 != poly2->term);
+
+    return result;
 }
 
 int main() {
-    char num1[100], num2[100], result[101];
+    Header* poly1 = createHeader();
+    Header* poly2 = createHeader();
 
-    printf("Enter the first long positive integer: ");
-    scanf("%s", num1);
-    printf("Enter the second long positive integer: ");
-    scanf("%s", num2);
+    int coefficient, exponent;
+    int n, m;
 
-    addLongIntegers(num1, num2, result);
+    printf("Enter the number of terms in the first polynomial: ");
+    scanf("%d", &n);
 
-    printf("Sum: %s\n", result);
+    printf("Enter the terms for the first polynomial (coefficient exponent):\n");
+    for (int i = 0; i < n; i++) {
+        scanf("%d %d", &coefficient, &exponent);
+        insertTerm(poly1, coefficient, exponent);
+    }
+
+    printf("Enter the number of terms in the second polynomial: ");
+    scanf("%d", &m);
+
+    printf("Enter the terms for the second polynomial (coefficient exponent):\n");
+    for (int i = 0; i < m; i++) {
+        scanf("%d %d", &coefficient, &exponent);
+        insertTerm(poly2, coefficient, exponent);
+    }
+
+    printf("First Polynomial: ");
+    displayPolynomial(poly1);
+
+    printf("Second Polynomial: ");
+    displayPolynomial(poly2);
+
+    Header* result = addPolynomials(poly1, poly2);
+
+    printf("Resultant Polynomial (Sum of the two polynomials): ");
+    displayPolynomial(result);
+
+    // Free the memory to avoid memory leaks
+    Term* term1 = poly1->term;
+    do {
+        Term* temp = term1;
+        term1 = term1->next;
+        free(temp);
+    } while (term1 != poly1->term);
+
+    Term* term2 = poly2->term;
+    do {
+        Term* temp = term2;
+        term2 = term2->next;
+        free(temp);
+    } while (term2 != poly2->term);
+
+    Term* termResult = result->term;
+    do {
+        Term* temp = termResult;
+        termResult = termResult->next;
+        free(temp);
+    } while (termResult != result->term);
+
+    free(poly1);
+    free(poly2);
+    free(result);
 
     return 0;
 }
+
