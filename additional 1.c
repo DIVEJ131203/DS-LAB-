@@ -1,159 +1,82 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
-// Define a structure for a term in a polynomial
-struct Term {
-    int coefficient;
-    int exponent;
-    struct Term* next;
-    struct Term* prev;
+// Structure for a binary tree node
+struct Node {
+    int data;
+    struct Node* left;
+    struct Node* right;
 };
 
-typedef struct Term Term;
+typedef struct Node Node;
 
-// Define a structure for the header node
-struct Header {
-    int degree;
-    Term* term;
-};
-
-typedef struct Header Header;
-
-Header* createHeader(int degree) {
-    Header* newHeader = (Header*)malloc(sizeof(Header));
-    newHeader->degree = degree;
-    newHeader->term = NULL;
-    return newHeader;
+// Function to create a new binary tree node
+Node* createNode(int data) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->data = data;
+    newNode->left = NULL;
+    newNode->right = NULL;
+    return newNode;
 }
 
-Term* createTerm(int coefficient, int exponent) {
-    Term* newTerm = (Term*)malloc(sizeof(Term));
-    newTerm->coefficient = coefficient;
-    newTerm->exponent = exponent;
-    newTerm->next = NULL;
-    newTerm->prev = NULL;
-    return newTerm;
-}
-
-// Function to insert a term into a polynomial linked list
-void insertTerm(Header* header, int coefficient, int exponent) {
-    Term* newTerm = createTerm(coefficient, exponent);
-
-    if (header->term == NULL) {
-        header->term = newTerm;
-        newTerm->next = newTerm;
-        newTerm->prev = newTerm;
-    } else {
-        Term* current = header->term;
-        while (current->next != header->term) {
-            current = current->next;
-        }
-        current->next = newTerm;
-        newTerm->prev = current;
-        newTerm->next = header->term;
-        header->term->prev = newTerm;
-    }
-}
-
-// Function to display a polynomial
-void displayPolynomial(Header* header) {
-    if (header->term == NULL) {
-        printf("0\n");
-        return;
+// Function to check if two binary trees are equal
+bool areTreesEqual(Node* root1, Node* root2) {
+    if (root1 == NULL && root2 == NULL) {
+        return true; // Both trees are empty and therefore equal
     }
 
-    Term* current = header->term;
-    do {
-        printf("%dx^%d ", current->coefficient, current->exponent);
-        if (current->next != header->term) {
-            printf("+ ");
-        }
-        current = current->next;
-    } while (current != header->term);
-    printf("\n");
+    if (root1 == NULL || root2 == NULL) {
+        return false; // One tree is empty, and the other is not
+    }
+
+    if (root1->data != root2->data) {
+        return false; // Nodes have different values
+    }
+
+    // Recursively check the left and right subtrees
+    return areTreesEqual(root1->left, root2->left) && areTreesEqual(root1->right, root2->right);
 }
 
-// Function to multiply two polynomials
-Header* multiplyPolynomials(Header* poly1, Header* poly2) {
-    Header* result = createHeader(poly1->degree + poly2->degree);
+// Function to build a binary tree from user input
+Node* buildBinaryTree() {
+    int data;
+    printf("Enter data (or -1 to indicate NULL): ");
+    scanf("%d", &data);
 
-    Term* term1 = poly1->term;
-    do {
-        Term* term2 = poly2->term;
-        do {
-            int coefficient = term1->coefficient * term2->coefficient;
-            int exponent = term1->exponent + term2->exponent;
+    if (data == -1) {
+        return NULL; // Indicates a NULL node
+    }
 
-            insertTerm(result, coefficient, exponent);
-            term2 = term2->next;
-        } while (term2 != poly2->term);
-        term1 = term1->next;
-    } while (term1 != poly1->term);
+    Node* root = createNode(data);
 
-    return result;
+    printf("Enter left subtree of %d:\n", data);
+    root->left = buildBinaryTree();
+
+    printf("Enter right subtree of %d:\n", data);
+    root->right = buildBinaryTree();
+
+    return root;
 }
 
 int main() {
-    Header* poly1 = createHeader(0);
-    Header* poly2 = createHeader(0);
+    printf("Enter the first binary tree:\n");
+    Node* root1 = buildBinaryTree();
 
-    int coefficient, exponent;
-    int n, m;
+    printf("Enter the second binary tree:\n");
+    Node* root2 = buildBinaryTree();
 
-    printf("Enter the number of terms in the first polynomial: ");
-    scanf("%d", &n);
-
-    printf("Enter the terms for the first polynomial (coefficient exponent):\n");
-    for (int i = 0; i < n; i++) {
-        scanf("%d %d", &coefficient, &exponent);
-        insertTerm(poly1, coefficient, exponent);
+    // Check if the two trees are equal
+    if (areTreesEqual(root1, root2)) {
+        printf("The two trees are equal.\n");
+    } else {
+        printf("The two trees are not equal.\n");
     }
 
-    printf("Enter the number of terms in the second polynomial: ");
-    scanf("%d", &m);
-
-    printf("Enter the terms for the second polynomial (coefficient exponent):\n");
-    for (int i = 0; i < m; i++) {
-        scanf("%d %d", &coefficient, &exponent);
-        insertTerm(poly2, coefficient, exponent);
-    }
-
-    printf("First Polynomial: ");
-    displayPolynomial(poly1);
-
-    printf("Second Polynomial: ");
-    displayPolynomial(poly2);
-
-    Header* result = multiplyPolynomials(poly1, poly2);
-
-    printf("Resultant Polynomial (Multiplication of the two polynomials): ");
-    displayPolynomial(result);
-
-    // Free the memory to avoid memory leaks
-    Term* term1 = poly1->term;
-    do {
-        Term* temp = term1;
-        term1 = term1->next;
-        free(temp);
-    } while (term1 != poly1->term);
-
-    Term* term2 = poly2->term;
-    do {
-        Term* temp = term2;
-        term2 = term2->next;
-        free(temp);
-    } while (term2 != poly2->term);
-
-    Term* termResult = result->term;
-    do {
-        Term* temp = termResult;
-        termResult = termResult->next;
-        free(temp);
-    } while (termResult != result->term);
-
-    free(poly1);
-    free(poly2);
-    free(result);
+    // Free the allocated memory
+    // You may want to implement a separate function to free the tree nodes properly
+    free(root1);
+    free(root2);
 
     return 0;
 }

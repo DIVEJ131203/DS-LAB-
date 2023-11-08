@@ -1,134 +1,92 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
-// Structure to represent a booking
-struct Booking {
-    int machineNumber;
-    int timeDuration;
-    struct Booking* next;
-    struct Booking* prev;
+// Structure for a binary tree node
+struct Node {
+    int data;
+    struct Node* left;
+    struct Node* right;
 };
 
-typedef struct Booking Booking;
+typedef struct Node Node;
 
-Booking* createBooking(int machineNumber, int timeDuration) {
-    Booking* newBooking = (Booking*)malloc(sizeof(Booking));
-    newBooking->machineNumber = machineNumber;
-    newBooking->timeDuration = timeDuration;
-    newBooking->next = NULL;
-    newBooking->prev = NULL;
-    return newBooking;
+// Function to create a new binary tree node
+Node* createNode(int data) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->data = data;
+    newNode->left = NULL;
+    newNode->right = NULL;
+    return newNode;
 }
 
-// Function to insert a booking into the queue
-Booking* insertBooking(Booking* head, int machineNumber, int timeDuration) {
-    Booking* newBooking = createBooking(machineNumber, timeDuration);
-
-    if (head == NULL) {
-        newBooking->next = newBooking;
-        newBooking->prev = newBooking;
-        return newBooking;
+// Function to copy a binary tree
+Node* copyTree(Node* source) {
+    if (source == NULL) {
+        return NULL; // Return NULL for an empty tree
     }
 
-    newBooking->next = head;
-    newBooking->prev = head->prev;
-    head->prev->next = newBooking;
-    head->prev = newBooking;
-    return newBooking;
+    // Create a new node with the same data
+    Node* copy = createNode(source->data);
+
+    // Recursively copy the left and right subtrees
+    copy->left = copyTree(source->left);
+    copy->right = copyTree(source->right);
+
+    return copy;
 }
 
-// Function to process the washing machine queue
-Booking* processQueue(Booking* head) {
-    if (head == NULL) {
-        printf("No bookings in the queue.\n");
-        return head;
-    }
-
-    printf("Machine %d started for %d minutes.\n", head->machineNumber, head->timeDuration);
-
-    Booking* temp = head;
-
-    if (head->next == head) {
-        free(head);
-        return NULL;
-    }
-
-    head = head->next;
-    head->prev = temp->prev;
-    temp->prev->next = head;
-
-    free(temp);
-
-    return head;
-}
-
-// Function to display the queue
-void displayQueue(Booking* head) {
-    if (head == NULL) {
-        printf("Queue is empty.\n");
+// Function to print a binary tree using in-order traversal
+void printBinaryTree(Node* root) {
+    if (root == NULL) {
         return;
     }
 
-    Booking* current = head;
-    do {
-        printf("Machine %d (%d minutes) -> ", current->machineNumber, current->timeDuration);
-        current = current->next;
-    } while (current != head);
-    printf("...\n");
+    printBinaryTree(root->left);
+    printf("%d ", root->data);
+    printBinaryTree(root->right);
+}
+
+// Function to build a binary tree from user input
+Node* buildBinaryTree() {
+    int data;
+    printf("Enter data (or -1 to indicate NULL): ");
+    scanf("%d", &data);
+
+    if (data == -1) {
+        return NULL; // Indicates a NULL node
+    }
+
+    Node* root = createNode(data);
+
+    printf("Enter left subtree of %d:\n", data);
+    root->left = buildBinaryTree();
+
+    printf("Enter right subtree of %d:\n", data);
+    root->right = buildBinaryTree();
+
+    return root;
 }
 
 int main() {
-    Booking* queue = NULL;
-    int choice;
-    int machineNumber, timeDuration;
+    printf("Enter the source binary tree:\n");
+    Node* sourceTree = buildBinaryTree();
 
-    while (1) {
-        printf("\nMenu:\n");
-        printf("1. Book a washing machine\n");
-        printf("2. Process the next machine\n");
-        printf("3. Display the queue\n");
-        printf("4. Exit\n");
+    // Copy the source tree to a new tree
+    Node* copiedTree = copyTree(sourceTree);
 
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
+    printf("Source Binary Tree (In-order traversal): ");
+    printBinaryTree(sourceTree);
+    printf("\n");
 
-        switch (choice) {
-            case 1:
-                printf("Enter machine number: ");
-                scanf("%d", &machineNumber);
-                printf("Enter booking time (minutes): ");
-                scanf("%d", &timeDuration);
-                queue = insertBooking(queue, machineNumber, timeDuration);
-                break;
+    printf("Copied Binary Tree (In-order traversal): ");
+    printBinaryTree(copiedTree);
+    printf("\n");
 
-            case 2:
-                queue = processQueue(queue);
-                break;
-
-            case 3:
-                displayQueue(queue);
-                break;
-
-            case 4:
-                // Free the memory to avoid memory leaks
-                while (queue != NULL) {
-                    Booking* temp = queue;
-                    queue = queue->next;
-                    if (temp->next == temp) {
-                        free(temp);
-                        break;
-                    }
-                    temp->prev->next = temp->next;
-                    temp->next->prev = temp->prev;
-                    free(temp);
-                }
-                exit(0);
-                break;
-
-            default:
-                printf("Invalid choice. Please try again.\n");
-        }
-    }
+    // Free the allocated memory
+    // You may want to implement a separate function to free the tree nodes properly
+    free(sourceTree);
+    free(copiedTree);
 
     return 0;
 }
