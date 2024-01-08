@@ -1,4 +1,4 @@
-#include <stdio.h>
+1#include <stdio.h>
 #include <stdlib.h>
 
 struct Node {
@@ -13,6 +13,7 @@ Node* createNode(int data) {
     newNode->data = data;
     newNode->next = NULL;
     return newNode;
+
 }
 
 Node* insertAtEnd(Node* head, int data) {
